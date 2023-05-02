@@ -1,0 +1,12 @@
+version: '2.2'
+services:
+  azure:
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
+    volumes:
+      - ./tmp:/tmp
+      #- ./.azure:/home/azcli/.azure
+      - ~/.ssh:/home/azcli/.ssh
+    ports:
+      - "22166:22166"
