@@ -1,6 +1,9 @@
 version: '2.2'
 services:
   azure:
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     build:
       context: .
       dockerfile: ./.docker/Dockerfile

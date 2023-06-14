@@ -7,3 +7,7 @@ run:
 .PHONY: stop
 stop:
 	docker-compose down
+
+.PHONY: cli
+cli:
+	docker exec -it eon-azcli-tool_azure_1 bash

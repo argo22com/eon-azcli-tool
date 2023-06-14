@@ -1,6 +1,10 @@
 FROM mcr.microsoft.com/azure-cli:latest
 
-RUN adduser -Du 1000 azcli
+RUN apk upgrade -U && \
+    apk --update add --no-cache \
+    iptables && \
+    \
+    adduser -Du 1000 azcli
 
 USER azcli
 
