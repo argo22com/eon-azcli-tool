@@ -1,0 +1,5 @@
+#!/bin/sh
+
+az login && \
+    az extension add --name bastion && \
+    sed -i -e "s/localhost/0.0.0.0/" /home/azcli/.azure/cliextensions/bastion/azext_bastion/custom.py

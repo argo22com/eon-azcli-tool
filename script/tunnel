@@ -1,0 +1,98 @@
+#!/usr/bin/perl -w
+
+use strict;
+use warnings;
+no warnings 'experimental::smartmatch';
+
+binmode STDOUT, ":utf8";
+use utf8;
+use feature qw(switch);
+
+# TODO: validate @ARGV count
+my ($tunnel_operation, $tunnel_name) = @ARGV;
+
+my $tunnel_id = $ENV{"${tunnel_name}_PORT"};
+
+given ($tunnel_operation) {
+    when ("start") {
+        tunnel_start($tunnel_id);
+    }
+    when ("stop") {
+        tunnel_stop($tunnel_id);
+    }
+    default {
+        print "Invalid operation '$tunnel_operation'\n";
+        exit 1;
+    }
+}
+
+sub tunnel_start {
+    my $tunnel_id = shift;
+    my @env_names = ("NAME", "RG", "RID", "RPORT", "PORT");
+    my @env_values = ();
+
+    for my $i (@env_names) {
+        my $var_name = "${tunnel_name}_$i";
+        if (!$ENV{$var_name}) {
+            print "Missing environment variable '$var_name'.\n";
+            exit 1;
+        }
+        push(@env_values, $ENV{$var_name});
+    }
+
+    my $command_template = 'az network bastion tunnel --name "%s" --resource-group '
+        . '"%s" --target-resource-id "%s" --resource-port "%s" --port "%s" &';
+
+    my $command = sprintf($command_template, @env_values);
+
+    if (tunnel_run($command)) {
+        print "Cannot establish tunnel\n";
+        exit 1;
+    }
+    my $pid = tunnel_pid($tunnel_id);
+    store_pid($pid, $tunnel_id);
+
+    print ("Tunnel PID: $pid" or "N/A, looks like an error occurred\n");
+    exit 0;
+}
+
+sub tunnel_stop {
+    my $tunnel_id = shift;
+    my $pid = load_pid($tunnel_id);
+    my $result = `kill -SIGHUP $pid`; # SIGNAL
+	my $exit_code = $? >> 8;
+    if ($exit_code) {
+        print "Cannot stop tunnel '$pid'\n";
+        print $result;
+        exit $exit_code;
+    }
+    `rm /tmp/$tunnel_id`;
+    exit 0;
+}
+
+sub tunnel_run {
+    system shift;
+	my $exit_code = $? >> 8;
+}
+
+sub tunnel_pid {
+    my $grep_this = shift;
+    my $pid = "ps |grep $grep_this| grep -v grep | awk '{print \$1}'";
+    $pid = `$pid`;
+    $pid =~ s/\s\n//;
+    return $pid;
+}
+
+sub store_pid {
+    my $pid = shift;
+    my $tunnel_id = shift;
+    $pid =~ s/\s\n//;
+    `echo "$pid" > /tmp/$tunnel_id`;
+}
+
+sub load_pid {
+    my $tunnel_id = shift;
+    my $pid = `cat /tmp/$tunnel_id`;
+    $pid =~ s/\s\n//;
+    return $pid;
+}

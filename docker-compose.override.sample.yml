@@ -1,0 +1,6 @@
+version: '2.2'
+services:
+  azure:
+    ports:
+      - "22222:22222"
+      - "22333:22333"

@@ -1,15 +1,10 @@
 version: '2.2'
 services:
   azure:
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
     build:
       context: .
       dockerfile: ./.docker/Dockerfile
-    volumes:
-      - ./tmp:/tmp
-      #- ./.azure:/home/azcli/.azure
-      - ~/.ssh:/home/azcli/.ssh
+    env_file:
+      - .env
     ports:
       - "22166:22166"

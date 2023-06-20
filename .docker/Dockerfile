@@ -11,4 +11,7 @@ USER azcli
 
 WORKDIR /home/azcli
 
+COPY ./script/init ./init
+COPY ./script/tunnel ./tunnel
+
 CMD ["tail", "-f", "/dev/null"]
