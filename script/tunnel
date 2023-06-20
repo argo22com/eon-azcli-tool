@@ -60,7 +60,7 @@ sub tunnel_stop {
     my $tunnel_id = shift;
     my $pid = load_pid($tunnel_id);
     my $result = `kill -SIGHUP $pid`; # SIGNAL
-	my $exit_code = $? >> 8;
+    my $exit_code = $? >> 8;
     if ($exit_code) {
         print "Cannot stop tunnel '$pid'\n";
         print $result;
@@ -72,7 +72,7 @@ sub tunnel_stop {
 
 sub tunnel_run {
     system shift;
-	my $exit_code = $? >> 8;
+    my $exit_code = $? >> 8;
 }
 
 sub tunnel_pid {
