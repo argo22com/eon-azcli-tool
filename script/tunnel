@@ -64,7 +64,11 @@ sub tunnel_start {
 sub tunnel_stop {
     my $tunnel_id = shift;
     my $pid = load_pid($tunnel_id);
-    my $result = `kill -SIGHUP $pid`; # SIGNAL
+    if (not $pid) {
+        print "Cannot find tunnel pid\n";
+        exit 1;
+    }
+    my $result = `kill -SIGINT $pid`;
     my $exit_code = $? >> 8;
     if ($exit_code) {
         print "Cannot stop tunnel '$pid'\n";
@@ -97,7 +101,7 @@ sub store_pid {
 
 sub load_pid {
     my $tunnel_id = shift;
-    my $pid = `cat /tmp/$tunnel_id`;
+    my $pid = `cat /tmp/$tunnel_id 2> /dev/null`;
     $pid =~ s/\s\n//;
     return $pid;
 }
