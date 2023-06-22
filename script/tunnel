@@ -40,8 +40,13 @@ sub tunnel_start {
         push(@env_values, $ENV{$var_name});
     }
 
-    my $command_template = 'az network bastion tunnel --name "%s" --resource-group '
-        . '"%s" --target-resource-id "%s" --resource-port "%s" --port "%s" &';
+    my $command_template = 'az network bastion tunnel '
+        . '--name "%s" '
+        . '--resource-group "%s" '
+        . '--target-resource-id "%s" '
+        . '--resource-port "%s" '
+        . '--port "%s" '
+        . '> /dev/null 2>&1 &';
 
     my $command = sprintf($command_template, @env_values);
 
