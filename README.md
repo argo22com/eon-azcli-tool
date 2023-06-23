@@ -28,5 +28,4 @@ Dockerized client for Azure Bastion
 * Setup and test integration API via bastion
 * Automatic port exposition to a host
 * Once bastion script [is fixed](https://github.com/Azure/azure-cli-extensions/issues/4568), patching the library will no longer be necessary and can be dropped.
-* Create CMD script that waits for zombie python processes
 * Improve runtime param validation
