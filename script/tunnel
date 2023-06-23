@@ -98,11 +98,28 @@ sub load_pid {
     return $pid;
 }
 
+sub tunnel_list {
+    my $cmd = "env |grep PORT |grep -v RPORT";
+    for my $i (`$cmd`) {
+        my @list = split '=', $i;
+        next unless $#list == 1;
+        chomp($list[1]);
+        next unless load_pid $list[1];
+        my @tunnel_env = split '_', $list[0];
+        next unless $#tunnel_env > 0;
+        pop @tunnel_env;
+        my $tunnel_id = join '_', @tunnel_env;
+        print "$tunnel_id -> ${list[1]}\n";
+    }
+    exit 0;
+}
+
 unless ($#ARGV > -1) {
-    print "Specify tunnel command: start|stop\n";
+    print "Specify tunnel operation start|stop|show\n";
     exit 1;
 }
 tunnel_start if $ARGV[0] eq "start";
 tunnel_stop if $ARGV[0] eq "stop";
+tunnel_list if $ARGV[0] eq "show";
 print "Invalid operation '${ARGV[0]}'\n";
 exit 1;
