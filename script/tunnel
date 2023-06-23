@@ -1,43 +1,35 @@
 #!/usr/bin/perl -w
 
+use 5.014;
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
-
-binmode STDOUT, ":utf8";
 use utf8;
-use feature qw(switch);
 
-# TODO: validate @ARGV count
-my ($tunnel_operation, $tunnel_name) = @ARGV;
-
-my $tunnel_id = $ENV{"${tunnel_name}_PORT"};
-
-given ($tunnel_operation) {
-    when ("start") {
-        tunnel_start($tunnel_id);
-    }
-    when ("stop") {
-        tunnel_stop($tunnel_id);
-    }
-    default {
-        print "Invalid operation '$tunnel_operation'\n";
+sub tunnel_id {
+    unless (defined $ARGV[1]) {
+        print "Tunnel ID missing\n";
         exit 1;
     }
+    my $tunnel_id = $ENV{"${ARGV[1]}_PORT"};
 }
 
 sub tunnel_start {
-    my $tunnel_id = shift;
+    my $tunnel_id = tunnel_id;
     my @env_names = ("NAME", "RG", "RID", "RPORT", "PORT");
     my @env_values = ();
 
     for my $i (@env_names) {
-        my $var_name = "${tunnel_name}_$i";
+        my $var_name = "${ARGV[1]}_$i";
         if (!$ENV{$var_name}) {
             print "Missing environment variable '$var_name'.\n";
             exit 1;
         }
         push(@env_values, $ENV{$var_name});
+    }
+    my $pid = load_pid($tunnel_id);
+    if ($pid) {
+        print "Tunnel ('$tunnel_id') PID ('$pid') already exists\n";
+        exit 1;
     }
 
     my $command_template = 'az network bastion tunnel '
@@ -54,7 +46,7 @@ sub tunnel_start {
         print "Cannot establish tunnel\n";
         exit 1;
     }
-    my $pid = tunnel_pid($tunnel_id);
+    $pid = tunnel_pid($tunnel_id);
     store_pid($pid, $tunnel_id);
 
     print ("Tunnel PID: $pid" or "N/A, looks like an error occurred\n");
@@ -62,7 +54,7 @@ sub tunnel_start {
 }
 
 sub tunnel_stop {
-    my $tunnel_id = shift;
+    my $tunnel_id = tunnel_id;
     my $pid = load_pid($tunnel_id);
     if (not $pid) {
         print "Cannot find tunnel pid\n";
@@ -105,3 +97,12 @@ sub load_pid {
     $pid =~ s/\s\n//;
     return $pid;
 }
+
+unless ($#ARGV > -1) {
+    print "Specify tunnel command: start|stop\n";
+    exit 1;
+}
+tunnel_start if $ARGV[0] eq "start";
+tunnel_stop if $ARGV[0] eq "stop";
+print "Invalid operation '${ARGV[0]}'\n";
+exit 1;
