@@ -10,4 +10,4 @@ stop:
 
 .PHONY: cli
 cli:
-	docker exec -it eon-azcli-tool_azure_1 bash
+	docker exec -it azure-bastion bash

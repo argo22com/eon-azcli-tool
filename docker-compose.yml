@@ -8,3 +8,10 @@ services:
       - .env
     ports:
       - "22166:22166"
+    networks:
+      - bastion-network
+    container_name: "azure-bastion"
+networks:
+  bastion-network:
+    external: false
+    name: bastion-network
