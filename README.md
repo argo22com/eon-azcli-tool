@@ -8,7 +8,6 @@ Dockerized client for Azure Bastion
 
 * docker
 * docker-compose
-* ~~[net-tols package](https://packages.debian.org/bullseye/net-tools) to be able to use `route` tool~~ (not ready as of now)
 * make
 
 ## How to
@@ -24,7 +23,5 @@ Dockerized client for Azure Bastion
 
 ## TODOs
 
-* ~~Setup and test DB connectivity via bastion~~ works OK w/o a need for any configuration on the container side
-* Setup and test integration API via bastion
-* Automatic port exposition to a host
+* ~~Automatic port exposition to a host~~ Does not make much sense
 * Once bastion script [is fixed](https://github.com/Azure/azure-cli-extensions/issues/4568), patching the library will no longer be necessary and can be dropped.
