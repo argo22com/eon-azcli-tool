@@ -5,70 +5,16 @@ use strict;
 use warnings;
 use utf8;
 
+sub err {
+    printf "%s\n", shift;
+    my $exit_code = shift;
+    $exit_code = 1 unless defined $exit_code;
+    exit $exit_code;
+}
+
 sub tunnel_id {
-    unless (defined $ARGV[1]) {
-        print "Tunnel ID missing\n";
-        exit 1;
-    }
+    err "Tunnel ID missing" unless defined $ARGV[1];
     my $tunnel_id = $ENV{"${ARGV[1]}_PORT"};
-}
-
-sub tunnel_start {
-    my $tunnel_id = tunnel_id;
-    my @env_names = ("NAME", "RG", "RID", "RPORT", "PORT");
-    my @env_values = ();
-
-    for my $i (@env_names) {
-        my $var_name = "${ARGV[1]}_$i";
-        if (!$ENV{$var_name}) {
-            print "Missing environment variable '$var_name'.\n";
-            exit 1;
-        }
-        push(@env_values, $ENV{$var_name});
-    }
-    my $pid = load_pid($tunnel_id);
-    if ($pid) {
-        print "Tunnel ('$tunnel_id') PID ('$pid') already exists\n";
-        exit 1;
-    }
-
-    my $command_template = 'az network bastion tunnel '
-        . '--name "%s" '
-        . '--resource-group "%s" '
-        . '--target-resource-id "%s" '
-        . '--resource-port "%s" '
-        . '--port "%s" '
-        . '> /dev/null 2>&1 &';
-
-    my $command = sprintf($command_template, @env_values);
-
-    if (tunnel_run($command)) {
-        print "Cannot establish tunnel\n";
-        exit 1;
-    }
-    $pid = tunnel_pid($tunnel_id);
-    store_pid($pid, $tunnel_id);
-
-    print ("Tunnel PID: $pid" or "N/A, looks like an error occurred\n");
-    exit 0;
-}
-
-sub tunnel_stop {
-    my $tunnel_id = tunnel_id;
-    my $pid = load_pid($tunnel_id);
-    if (not $pid) {
-        print "Cannot find tunnel pid\n";
-        exit 1;
-    }
-    my $result = `kill -SIGINT $pid`;
-    my $exit_code = $? >> 8;
-    if ($exit_code) {
-        print "Cannot stop tunnel '$pid'\n";
-        print $result;
-        exit $exit_code;
-    }
-    `rm /tmp/$tunnel_id`;
-    exit 0;
 }
 
 sub tunnel_run {
@@ -80,22 +26,71 @@ sub tunnel_pid {
     my $grep_this = shift;
     my $pid = "ps |grep $grep_this| grep -v grep | awk '{print \$1}'";
     $pid = `$pid`;
-    $pid =~ s/\s\n//;
+    chomp($pid);
     return $pid;
 }
 
 sub store_pid {
     my $pid = shift;
     my $tunnel_id = shift;
-    $pid =~ s/\s\n//;
+    chomp($pid);
     `echo "$pid" > /tmp/$tunnel_id`;
 }
 
 sub load_pid {
     my $tunnel_id = shift;
     my $pid = `cat /tmp/$tunnel_id 2> /dev/null`;
-    $pid =~ s/\s\n//;
+    chomp($pid);
     return $pid;
+}
+
+sub env_value {
+    my $var_name = "${ARGV[1]}_$_";
+    err "Missing environment variable '$var_name'.\n" unless $ENV{$var_name};
+    $var_name = $ENV{$var_name};
+}
+
+sub tunnel_start {
+    my $tunnel_id = tunnel_id;
+    my @env_values = ();
+
+    push @env_values, env_value $_ for ("NAME", "RG", "RID", "RPORT", "PORT");
+    my $pid = load_pid $tunnel_id;
+
+    err "Tunnel ('$tunnel_id') PID ('$pid') already exists" if $pid;
+
+    my $command_template = 'az network bastion tunnel '
+        . '--name "%s" '
+        . '--resource-group "%s" '
+        . '--target-resource-id "%s" '
+        . '--resource-port "%s" '
+        . '--port "%s" '
+        . '> /dev/null 2>&1 &';
+
+    my $command = sprintf $command_template, @env_values;
+
+    err "Cannot establish tunnel\n" if tunnel_run $command;
+
+    $pid = tunnel_pid $tunnel_id;
+    store_pid $pid, $tunnel_id;
+
+    print "Tunnel PID: $pid\n";
+    exit 0;
+}
+
+sub tunnel_stop {
+    my $tunnel_id = tunnel_id;
+    my $pid = load_pid $tunnel_id;
+
+    err "Cannot find tunnel pid" unless $pid;
+
+    my $result = `kill -SIGINT $pid`;
+    my $exit_code = $? >> 8;
+
+    err "Cannot stop tunnel '$pid'\n$result", $exit_code if $exit_code;
+
+    `rm /tmp/$tunnel_id`;
+    exit 0;
 }
 
 sub tunnel_list {
@@ -114,12 +109,10 @@ sub tunnel_list {
     exit 0;
 }
 
-unless ($#ARGV > -1) {
-    print "Specify tunnel operation start|stop|show\n";
-    exit 1;
-}
+err "Specify tunnel operation start|stop|show" unless $#ARGV > -1;
+
 tunnel_start if $ARGV[0] eq "start";
 tunnel_stop if $ARGV[0] eq "stop";
 tunnel_list if $ARGV[0] eq "show";
-print "Invalid operation '${ARGV[0]}'\n";
-exit 1;
+
+err "Invalid operation '${ARGV[0]}'";
