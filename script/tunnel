@@ -93,6 +93,13 @@ sub tunnel_stop {
     exit 0;
 }
 
+sub get_stat {
+    my $lc = sprintf "ps |grep %s |wc -l", @_;
+    $lc = `$lc`;
+    chomp($lc);
+    $lc == 3
+}
+
 sub tunnel_list {
     my $cmd = "env |grep PORT |grep -v RPORT";
     for my $i (`$cmd`) {
@@ -104,6 +111,11 @@ sub tunnel_list {
         next unless $#tunnel_env > 0;
         pop @tunnel_env;
         my $tunnel_id = join '_', @tunnel_env;
+        unless (get_stat ${list[1]}) {
+            print "$tunnel_id stale, clearing reference...\n";
+            `rm /tmp/${list[1]}`;
+            next;
+        }
         print "$tunnel_id -> ${list[1]}\n";
     }
     exit 0;
