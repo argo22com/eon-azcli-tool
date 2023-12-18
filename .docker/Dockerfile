@@ -12,5 +12,7 @@ WORKDIR /home/azcli
 
 COPY ./script/init ./init
 COPY ./script/tunnel ./tunnel
+COPY ./script/completion-script ./completion-script
+COPY ./script/.bashrc ./.bashrc
 
 CMD init

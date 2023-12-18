@@ -1,3 +1,4 @@
 .env
 makefile
 docker-compose.override.yml
+*.sw[op]

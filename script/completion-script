@@ -1,0 +1,14 @@
+#/usr/bin/env bash
+_do_completions()
+{
+  if [ "${#COMP_WORDS[@]}" == "2" ]; then
+    COMPREPLY=($(compgen -W "show start stop" "${COMP_WORDS[1]}"))
+    return
+  fi
+
+  if [ "${#COMP_WORDS[@]}" == "3" ]; then
+    COMPREPLY=($(compgen -W "$(env |grep _NAME | awk -F= '{print $1}'| awk -F_ '{print $1"_"$2}' |tr '\n' ' ')" "${COMP_WORDS[2]}"))
+  fi
+}
+
+complete -F _do_completions tunnel
