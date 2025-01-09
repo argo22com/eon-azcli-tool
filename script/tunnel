@@ -59,8 +59,12 @@ sub tunnel_start {
 
     err "Tunnel ('$tunnel_id') PID ('$pid') already exists" if $pid;
 
+    my $subscription = $env_values[2];
+    $subscription =~ s/^\/subscriptions\/([a-z0-9-]+)\/.*$/$1/g;
+
     my $command_template = 'az network bastion tunnel '
         . '--name "%s" '
+        . "--subscription $subscription "
         . '--resource-group "%s" '
         . '--target-resource-id "%s" '
         . '--resource-port "%s" '
